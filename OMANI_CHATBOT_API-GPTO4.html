@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMANI - المعالج الصوتي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .voice-interface {
+            position: relative;
+            margin: 40px 0;
+        }
+
+        .voice-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .voice-circle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(255, 107, 107, 0.3);
+        }
+
+        .voice-circle.listening {
+            animation: pulse 2s infinite;
+            background: linear-gradient(45deg, #00F260, #0575E6);
+        }
+
+        .voice-circle.speaking {
+            animation: speak 1.5s infinite;
+            background: linear-gradient(45deg, #FFD700, #FF8C00);
+        }
+
+        .voice-icon {
+            font-size: 4em;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.1em;
+            font-weight: 500;
+            min-height: 30px;
+        }
+
+        .conversation-log {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: right;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .user-message {
+            background: rgba(78, 205, 196, 0.3);
+            border-left: 3px solid #4ECDC4;
+        }
+
+        .bot-message {
+            background: rgba(255, 107, 107, 0.3);
+            border-left: 3px solid #FF6B6B;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .emergency-btn {
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            animation: glow 2s infinite alternate;
+        }
+
+        .wave {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            animation: wave 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes speak {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.05); }
+        }
+
+        @keyframes wave {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+            to { box-shadow: 0 0 20px rgba(255, 0, 0, 0.8); }
+        }
+
+        .disclaimer {
+            font-size: 0.8em;
+            opacity: 0.7;
+            margin-top: 20px;
+            line-height: 1.4;
+        }
+
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            .voice-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .voice-icon {
+                font-size: 3em;
+            }
+            
+            .logo {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">OMANI</div>
+            <div class="subtitle">المعالج النفسي الصوتي - مساعدك في الصحة النفسية</div>
+        </div>
+
+        <div class="voice-interface">
+            <div class="voice-circle" id="voiceCircle">
+                <div class="voice-icon" id="voiceIcon">🎤</div>
+                <div class="wave" style="animation-delay: 0s;"></div>
+                <div class="wave" style="animation-delay: 0.5s;"></div>
+                <div class="wave" style="animation-delay: 1s;"></div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="status" id="status">اضغط للتحدث معي</div>
+        </div>
+
+        <div class="conversation-log" id="conversationLog">
+            <div class="message bot-message">
+                مرحباً بك، أنا هنا للاستماع إليك ومساعدتك. كيف تشعر اليوم؟
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="startBtn">ابدأ المحادثة</button>
+            <button class="control-btn" id="stopBtn">أوقف الاستماع</button>
+            <button class="control-btn" id="clearBtn">امسح المحادثة</button>
+            <button class="control-btn emergency-btn" id="emergencyBtn">طوارئ</button>
+        </div>
+
+        <div class="disclaimer">
+            هذا نظام ذكي مساعد للصحة النفسية. في حالات الطوارئ، يرجى التواصل مع أخصائي الصحة النفسية أو الخدمات الطبية الطارئة.
+        </div>
+    </div>
+
+    <script>
+        class OmaniTherapistVoice {
+            constructor() {
+                this.isListening = false;
+                this.isSpeaking = false;
+                this.recognition = null;
+                this.synthesis = window.speechSynthesis;
+                this.conversationHistory = [];
+                this.emotionalState = 'neutral';
+                this.crisisKeywords = ['انتحار', 'أذى', 'موت', 'قتل', 'خطر'];
+                
+                this.initializeElements();
+                this.initializeSpeechRecognition();
+                this.bindEvents();
+                this.loadOmaniDialect();
+            }
+
+            initializeElements() {
+                this.voiceCircle = document.getElementById('voiceCircle');
+                this.voiceIcon = document.getElementById('voiceIcon');
+                this.status = document.getElementById('status');
+                this.conversationLog = document.getElementById('conversationLog');
+                this.startBtn = document.getElementById('startBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.clearBtn = document.getElementById('clearBtn');
+                this.emergencyBtn = document.getElementById('emergencyBtn');
+                this.loading = document.getElementById('loading');
+            }
+
+            initializeSpeechRecognition() {
+                if ('webkitSpeechRecognition' in window) {
+                    this.recognition = new webkitSpeechRecognition();
+                } else if ('SpeechRecognition' in window) {
+                    this.recognition = new SpeechRecognition();
+                } else {
+                    this.updateStatus('المتصفح لا يدعم التعرف على الصوت');
+                    return;
+                }
+
+                this.recognition.continuous = true;
+                this.recognition.interimResults = true;
+                this.recognition.lang = 'ar-OM'; // Omani Arabic
+                this.recognition.maxAlternatives = 3;
+
+                this.recognition.onstart = () => {
+                    this.isListening = true;
+                    this.updateUI('listening');
+                    this.updateStatus('أستمع إليك...');
+                };
+
+                this.recognition.onresult = (event) => {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+
+                    if (finalTranscript) {
+                        this.processUserInput(finalTranscript);
+                    }
+                };
+
+                this.recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    this.updateStatus('خطأ في التعرف على الصوت: ' + event.error);
+                    this.stopListening();
+                };
+
+                this.recognition.onend = () => {
+                    this.isListening = false;
+                    this.updateUI('idle');
+                };
+            }
+
+            loadOmaniDialect() {
+                // Omani Arabic specific vocabulary and phrases
+                this.omaniVocabulary = {
+                    greetings: ['مرحبا', 'أهلين', 'كيف حالك', 'شلونك', 'وينك'],
+                    emotions: {
+                        sad: ['حزين', 'زعلان', 'مكتئب', 'متضايق'],
+                        angry: ['زعلان', 'غضبان', 'متنرفز', 'مستفز'],
+                        anxious: ['قلقان', 'خايف', 'متوتر', 'مرتبك'],
+                        happy: ['مبسوط', 'فرحان', 'سعيد', 'مرتاح']
+                    },
+                    family: ['أهل', 'عيال', 'والد', 'والدة', 'أخ', 'أخت', 'جد', 'جدة'],
+                    work: ['شغل', 'وظيفة', 'دوام', 'مدير', 'زميل', 'راتب'],
+                    cultural: ['حلال', 'حرام', 'إن شاء الله', 'الله يعين', 'ربنا كريم']
+                };
+
+                this.therapeuticResponses = {
+                    empathy: [
+                        'أفهم شعورك، هذا أمر صعب',
+                        'أقدر ما تمر به، والله يعينك',
+                        'كلامك واضح ومفهوم، أنا هنا لأساعدك'
+                    ],
+                    cbt: [
+                        'خلنا نفكر في هذا الموضوع من زاوية ثانية',
+                        'شنو رأيك نحلل هذه المشاعر شوية؟',
+                        'هاي الأفكار طبيعية، بس خلنا نشوف كيف نتعامل معها'
+                    ],
+                    cultural: [
+                        'في ثقافتنا، هذا أمر مفهوم ومقبول',
+                        'الأهل عندنا لهم دور مهم، وهذا شيء جميل',
+                        'الدين يعطينا قوة وصبر في المحن'
+                    ]
+                };
+            }
+
+            bindEvents() {
+                this.voiceCircle.addEventListener('click', () => this.toggleListening());
+                this.startBtn.addEventListener('click', () => this.startListening());
+                this.stopBtn.addEventListener('click', () => this.stopListening());
+                this.clearBtn.addEventListener('click', () => this.clearConversation());
+                this.emergencyBtn.addEventListener('click', () => this.handleEmergency());
+            }
+
+            toggleListening() {
+                if (this.isListening) {
+                    this.stopListening();
+                } else {
+                    this.startListening();
+                }
+            }
+
+            startListening() {
+                if (this.recognition && !this.isListening) {
+                    this.recognition.start();
+                }
+            }
+
+            stopListening() {
+                if (this.recognition && this.isListening) {
+                    this.recognition.stop();
+                }
+            }
+
+            async processUserInput(userText) {
+                this.addMessage(userText, 'user');
+                this.updateStatus('أفكر في ردي...');
+                this.showLoading(true);
+            
+                // Crisis detection (optional local check)
+                if (this.detectCrisis(userText)) {
+                    await this.handleCrisisIntervention(userText);
+                    return;
+                }
+            
+                // Emotion analysis (for your metrics/history)
+                const emotion = this.analyzeEmotion(userText);
+                this.emotionalState = emotion;
+            
+                // ✅ NEW: Get response from Flask backend
+                const response = await this.getBackendReply(userText);
+            
+                this.showLoading(false);
+                this.addMessage(response, 'bot');
+                await this.speakResponse(response);
+            }
+            
+            async getBackendReply(userText) {
+                try {
+                    const response = await fetch("http://localhost:5000/process", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ message: userText })
+                    });
+            
+                    const data = await response.json();
+            
+                    if (data.crisis) {
+                        return data.response;
+                    }
+            
+                    return data.response;
+                } catch (error) {
+                    console.error("API error:", error);
+                    return "أواجه مشكلة في الاتصال بالخادم. حاول مرة أخرى لاحقاً.";
+                }
+            }            
+
+            detectCrisis(text) {
+                const lowerText = text.toLowerCase();
+                return this.crisisKeywords.some(keyword => lowerText.includes(keyword));
+            }
+
+            async handleCrisisIntervention(userText) {
+                const crisisResponse = `أفهم أنك تمر بوقت صعب جداً. سلامتك مهمة جداً لي. 
+                هل تستطيع التواصل مع شخص تثق به الآن؟ 
+                أو هل تريد أن أساعدك في التواصل مع أخصائي؟
+                رقم الطوارئ النفسية: 999`;
+                
+                this.showLoading(false);
+                this.addMessage(crisisResponse, 'bot');
+                await this.speakResponse(crisisResponse);
+                
+                // Log crisis event (in real app, would alert professionals)
+                console.warn('Crisis intervention triggered:', userText);
+            }
+
+            analyzeEmotion(text) {
+                const lowerText = text.toLowerCase();
+                
+                for (const [emotion, words] of Object.entries(this.omaniVocabulary.emotions)) {
+                    if (words.some(word => lowerText.includes(word))) {
+                        return emotion;
+                    }
+                }
+                
+                // Basic sentiment analysis
+                const positiveWords = ['جيد', 'حلو', 'ممتاز', 'رائع', 'سعيد'];
+                const negativeWords = ['سيء', 'صعب', 'مشكلة', 'متعب', 'حزين'];
+                
+                const positive = positiveWords.filter(word => lowerText.includes(word)).length;
+                const negative = negativeWords.filter(word => lowerText.includes(word)).length;
+                
+                if (positive > negative) return 'happy';
+                if (negative > positive) return 'sad';
+                return 'neutral';
+            }
+
+            async generateResponse(userText, emotion) {
+                // Simulate dual-model approach (GPT-4o primary, Claude Opus 4 fallback)
+                try {
+                    const primaryResponse = await this.generatePrimaryResponse(userText, emotion);
+                    const validatedResponse = await this.validateResponse(primaryResponse, userText);
+                    return validatedResponse;
+                } catch (error) {
+                    console.error('Primary model failed, using fallback:', error);
+                    return await this.generateFallbackResponse(userText, emotion);
+                }
+            }
+
+            async generatePrimaryResponse(userText, emotion) {
+                // Simulate GPT-4o response generation
+                await this.delay(2000); // Simulate API call
+                
+                const context = this.getTherapeuticContext(userText, emotion);
+                const culturalContext = this.getCulturalContext(userText);
+                
+                return this.constructResponse(context, culturalContext, emotion);
+            }
+
+            async validateResponse(response, originalText) {
+                // Simulate Claude Opus 4 validation
+                await this.delay(1000);
+                
+                // Check for cultural appropriateness, therapeutic value, and safety
+                if (this.isResponseAppropriate(response, originalText)) {
+                    return response;
+                } else {
+                    return await this.generateFallbackResponse(originalText, this.emotionalState);
+                }
+            }
+
+            async generateFallbackResponse(userText, emotion) {
+                // Fallback response generation
+                const responses = this.therapeuticResponses.empathy;
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                
+                return `${randomResponse}. هل يمكنك أن تخبرني أكثر عن شعورك؟`;
+            }
+
+            getTherapeuticContext(text, emotion) {
+                const lowerText = text.toLowerCase();
+                
+                if (this.omaniVocabulary.family.some(word => lowerText.includes(word))) {
+                    return 'family_therapy';
+                }
+                if (this.omaniVocabulary.work.some(word => lowerText.includes(word))) {
+                    return 'work_stress';
+                }
+                
+                return 'general_therapy';
+            }
+
+            getCulturalContext(text) {
+                const lowerText = text.toLowerCase();
+                
+                if (this.omaniVocabulary.cultural.some(phrase => lowerText.includes(phrase))) {
+                    return 'religious_spiritual';
+                }
+                
+                return 'secular';
+            }
+
+            constructResponse(context, culturalContext, emotion) {
+                let response = '';
+                
+                // Add empathy
+                response += this.therapeuticResponses.empathy[0] + '. ';
+                
+                // Add context-specific guidance
+                switch (context) {
+                    case 'family_therapy':
+                        response += 'الأهل جزء مهم من حياتنا. ';
+                        if (culturalContext === 'religious_spiritual') {
+                            response += 'والدين يعلمنا بر الوالدين والصبر. ';
+                        }
+                        break;
+                    case 'work_stress':
+                        response += 'ضغط العمل شيء طبيعي، لكن المهم كيف نتعامل معه. ';
+                        break;
+                    default:
+                        response += this.therapeuticResponses.cbt[0] + ' ';
+                }
+                
+                // Add follow-up question
+                response += 'خبرني أكثر، كيف أقدر أساعدك؟';
+                
+                return response;
+            }
+
+            isResponseAppropriate(response, originalText) {
+                // Basic appropriateness check
+                const inappropriateWords = ['غبي', 'سيء', 'خطأ'];
+                const lowerResponse = response.toLowerCase();
+                
+                return !inappropriateWords.some(word => lowerResponse.includes(word));
+            }
+
+            async speakResponse(text) {
+                return new Promise((resolve) => {
+                    // Cancel any ongoing speech
+                    this.synthesis.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'ar-OM';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.1;
+                    utterance.volume = 0.8;
+                    
+                    // Try to find Arabic voice
+                    const voices = this.synthesis.getVoices();
+                    const arabicVoice = voices.find(voice => 
+                        voice.lang.includes('ar') || voice.name.includes('Arabic')
+                    );
+                    
+                    if (arabicVoice) {
+                        utterance.voice = arabicVoice;
+                    }
+                    
+                    utterance.onstart = () => {
+                        this.isSpeaking = true;
+                        this.updateUI('speaking');
+                        this.updateStatus('أتحدث معك...');
+                    };
+                    
+                    utterance.onend = () => {
+                        this.isSpeaking = false;
+                        this.updateUI('idle');
+                        this.updateStatus('اضغط للتحدث معي');
+                        resolve();
+                    };
+                    
+                    utterance.onerror = (event) => {
+                        console.error('Speech synthesis error:', event);
+                        this.isSpeaking = false;
+                        this.updateUI('idle');
+                        resolve();
+                    };
+                    
+                    this.synthesis.speak(utterance);
+                });
+            }
+
+            addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                messageDiv.textContent = text;
+                
+                this.conversationLog.appendChild(messageDiv);
+                this.conversationLog.scrollTop = this.conversationLog.scrollHeight;
+                
+                // Store in conversation history
+                this.conversationHistory.push({
+                    text: text,
+                    sender: sender,
+                    timestamp: new Date(),
+                    emotion: this.emotionalState
+                });
+            }
+
+            updateUI(state) {
+                this.voiceCircle.className = 'voice-circle';
+                
+                switch (state) {
+                    case 'listening':
+                        this.voiceCircle.classList.add('listening');
+                        this.voiceIcon.textContent = '🎙️';
+                        break;
+                    case 'speaking':
+                        this.voiceCircle.classList.add('speaking');
+                        this.voiceIcon.textContent = '🗣️';
+                        break;
+                    default:
+                        this.voiceIcon.textContent = '🎤';
+                }
+            }
+
+            updateStatus(message) {
+                this.status.textContent = message;
+            }
+
+            showLoading(show) {
+                this.loading.style.display = show ? 'block' : 'none';
+                this.voiceIcon.style.display = show ? 'none' : 'block';
+            }
+
+            clearConversation() {
+                this.conversationLog.innerHTML = `
+                    <div class="message bot-message">
+                        مرحباً بك، أنا هنا للاستماع إليك ومساعدتك. كيف تشعر اليوم؟
+                    </div>
+                `;
+                this.conversationHistory = [];
+                this.emotionalState = 'neutral';
+            }
+
+            handleEmergency() {
+                const emergencyMessage = `
+                    أفهم أنك في وضع طارئ. إليك المساعدة الفورية:
+                    
+                    🚨 رقم الطوارئ العام: 999
+                    📞 خط المساعدة النفسية: 800-HELP
+                    🏥 أقرب مستشفى: اتصل بـ 999
+                    
+                    أنت لست وحدك. المساعدة متوفرة دائماً.
+                `;
+                
+                this.addMessage(emergencyMessage, 'bot');
+                this.speakResponse('رقم الطوارئ تسعة تسعة تسعة. اتصل بهم الآن للمساعدة الفورية.');
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            // Conversation quality metrics
+            getConversationMetrics() {
+                return {
+                    totalMessages: this.conversationHistory.length,
+                    userMessages: this.conversationHistory.filter(m => m.sender === 'user').length,
+                    botMessages: this.conversationHistory.filter(m => m.sender === 'bot').length,
+                    emotionalStates: [...new Set(this.conversationHistory.map(m => m.emotion))],
+                    duration: this.conversationHistory.length > 0 ? 
+                        new Date() - this.conversationHistory[0].timestamp : 0,
+                    lastActivity: this.conversationHistory.length > 0 ? 
+                        this.conversationHistory[this.conversationHistory.length - 1].timestamp : null
+                };
+            }
+
+            // Export conversation for analysis
+            exportConversation() {
+                return {
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    messages: this.conversationHistory,
+                    metrics: this.getConversationMetrics(),
+                    emotionalJourney: this.conversationHistory.map(m => ({
+                        timestamp: m.timestamp,
+                        emotion: m.emotion,
+                        sender: m.sender
+                    }))
+                };
+            }
+        }
+
+        // Initialize the application
+        let therapistApp;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            therapistApp = new OmaniTherapistVoice();
+            
+            // Handle page visibility changes
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && therapistApp.isListening) {
+                    therapistApp.stopListening();
+                }
+            });
+            
+            // Handle before unload for session saving
+            window.addEventListener('beforeunload', (event) => {
+                if (therapistApp.conversationHistory.length > 0) {
+                    // In real app, would save to secure backend
+                    console.log('Session data would be saved:', therapistApp.exportConversation());
+                }
+            });
+        });
+
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('Application error:', event.error);
+            if (therapistApp) {
+                therapistApp.updateStatus('حدث خطأ تقني. يرجى المحاولة مرة أخرى.');
+            }
+        });
+    </script>
+</body>
+</html>
